@@ -26,11 +26,14 @@
         <div id="panel">
         </div>
         <script type="text/javascript">
+
 var map = new AMap.Map("mapContainer", {
     resizeEnable: true,
     center: [116.397428, 39.90923],//地图中心点
     zoom: 13 //地图显示的缩放级别
 });
+
+var city = new Set();
 
 AMap.service(['AMap.Driving'],function(){
     var driving = new AMap.Driving({
@@ -38,11 +41,44 @@ AMap.service(['AMap.Driving'],function(){
         panel: "panel"
     }); 
 
+
     driving.search([{city:'北京'},{city:'武汉'}], function(status, result){
-        console.log(result);
-        //TODO 解析返回结果，自己生成操作界面和地图展示界面
-    });   
+        result.routes[0].steps.forEach(function(entry) {
+            var o = entry.cities[0].name;
+
+            if (!city.has(o)) {
+                city.add(o);
+            }
+        });
+        console.log(city);
+
+        AMap.service('AMap.Weather', function(){
+            var weather = new AMap.Weather();
+
+            for (let i of city) {
+                weather.getLive(i, function(err, data){
+                    if (err) 
+                        return;
+
+                    weather.getForecast(i, function(err, data) {
+                        if (err) {return;}
+                        var str = [];
+                        for (var j = 0,dayWeather; j < data.forecasts.length; j++) {
+                            dayWeather = data.forecasts[j];
+                            console.log(i, dayWeather.date, dayWeather.dayWeather)
+                        }
+                    });
+
+                });
+            }
+
+        });
+
+    });
 });
+
+
+
 
 
         </script>
